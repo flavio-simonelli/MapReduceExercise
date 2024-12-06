@@ -8,7 +8,7 @@ import (
 	"net"
 	"os"
 
-	pb "MapReduceExercise/proto/gen"
+	pb "MapReduceExercise/proto"
 
 	"google.golang.org/grpc"
 )
