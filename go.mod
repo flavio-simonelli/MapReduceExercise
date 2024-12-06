@@ -1,6 +1,8 @@
 module MapReduceExercise
 
-go 1.19
+go 1.22
+
+toolchain go1.23.4
 
 require (
 	google.golang.org/grpc v1.68.1

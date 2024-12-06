@@ -16,20 +16,6 @@
       "ip": "localhost",
       "port": 50003
     }
-  ],
-  "reducers": [
-    {
-      "ip": "localhost",
-      "port": 51000
-    },
-    {
-      "ip": "localhost",
-      "port": 51001
-    },
-    {
-      "ip": "localhost",
-      "port": 51002
-    }
   ]
 }
   
