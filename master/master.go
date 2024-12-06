@@ -9,7 +9,7 @@ import (
 )
 
 // Costante per il nome del file JSON
-const configFile = "../config/config.json"
+const configFile = "config/config.json"
 
 // Worker rappresenta un singolo worker con IP e porta.
 type Worker struct {
@@ -68,6 +68,8 @@ func main() {
 	numeroNumeri := len(numeri)
 	baseSize := numeroNumeri / numeroWorkers // numeri per ogni worker (parte omogenea)
 	resto := numeroNumeri % numeroWorkers    // numeri in eccesso che dovranno essere spartiti in modo disomogeneo
+	fmt.Printf("Resto: %d\n", resto)
+	fmt.Printf("BaseSize: %d\n", baseSize)
 
 	// Invio dei chunk a ciascun worker
 

@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package MapReduceExercise;
 
+option go_package = "./proto";
+
 message Chunk {
   repeated int32 numbers = 1; // Campo che rappresenta uno slice di numeri interi
 }
