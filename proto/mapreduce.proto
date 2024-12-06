@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package MapReduceExercise;
+
+message Chunk {
+  repeated int32 numbers = 1; // Campo che rappresenta uno slice di numeri interi
+}
+
+message response {
+  bool ack = 1; // booleano che mi dice se si è verificato qualche errore
+}
+
+service MapReduceService {
+  rpc Mapping (Chunk) returns (response);
+  rpc Reducing (Chunk) returns (response);
+}
