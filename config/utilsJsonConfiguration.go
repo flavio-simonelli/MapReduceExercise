@@ -9,10 +9,11 @@ import (
 const configFileWorker = "config/configWorker.json"
 const configFileMaster = "config/configMaster.json"
 
-// Worker rappresenta un singolo worker con IP e porta.
+// Worker rappresenta un singolo worker con IP e porta e identificativo univoco
 type Worker struct {
 	IP   string `json:"ip"`
 	Port int32  `json:"port"`
+	ID   int32  `json:"id"`
 }
 
 // ConfigWorker Config rappresenta la slice di worker configurati nel file JSON
