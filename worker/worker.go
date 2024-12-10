@@ -56,21 +56,24 @@ func (w *Worker) Mapping(ctx context.Context, chunk *pb.Chunk) (*pb.Response, er
 	for i, worker := range workersList {
 		wg.Add(1) // incrementiamo contatore wg
 
-		go func(i int, worker config.Worker) {
+		go func(i int, worker config.Worker) error {
 			defer wg.Done()                                         // decrementiamo il contatore wg quando la goroutine è completata
 			address := fmt.Sprintf("%s:%d", worker.IP, worker.Port) // creiamo l'indirizzo del worker da contattare
 			partition := partitionedChunks[i]                       // partizione da inviare all'i-esimo reducer
 
 			conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials())) // dial
 			if err != nil {
-				log.Fatalf("Errore nella connessione al worker %d: %v\n", i, err)
+				log.Printf("Errore nella connessione al worker %d: %v\n", i, err)
+				return err
 			}
 			defer conn.Close()                                                                                            // chiusura della connessione alla fine della goroutine
 			client := pb.NewWorkerServiceClient(conn)                                                                     // creazione del client grpc
 			_, err = client.Reducing(context.Background(), &pb.Chunk{Numbers: partition, IdRichiesta: chunk.IdRichiesta}) // effettua la chiamata gRPC di Mapping
 			if err != nil {
-				log.Fatalf("Errore nella chiamata Reducing al worker %d: %v\n", i, err)
+				log.Printf("Errore nella chiamata Reducing al worker %d: %v\n", i, err)
+				return err
 			}
+			return nil
 		}(i, worker)
 	}
 	wg.Wait()                           // aspettiamo che tutte le goroutine abbiano completato
@@ -186,5 +189,4 @@ func main() {
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("impossibile avviare il worker: %v", err)
 	}
-	log.Printf("Worker online")
 }

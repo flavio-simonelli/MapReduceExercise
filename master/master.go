@@ -60,7 +60,7 @@ func (w *Master) NewRequest(ctx context.Context, chunk *pb.Chunk) (*pb.Response,
 	}
 	wg.Wait() // aspettiamo che tutte le goroutine abbiano completato
 	log.Printf("La richiesta %v è stata eseguita con successo", chunk.IdRichiesta)
-	return &pb.Response{}, nil
+	return &pb.Response{Ack: true}, nil
 }
 
 func main() {
