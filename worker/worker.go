@@ -165,7 +165,7 @@ func main() {
 	var id int32 = -1 // Impostiamo un valore di default per id (ad esempio -1, che indica che non è stato trovato)
 	for _, w := range workersList {
 		if w.Port == int32(port) {
-			id = w.Port
+			id = w.ID
 			break // Se troviamo il worker, usciamo dal ciclo
 		}
 	}
