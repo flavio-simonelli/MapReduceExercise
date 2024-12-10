@@ -19,139 +19,241 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	MapReduceService_Mapping_FullMethodName  = "/MapReduceExercise.MapReduceService/Mapping"
-	MapReduceService_Reducing_FullMethodName = "/MapReduceExercise.MapReduceService/Reducing"
+	WorkerService_Mapping_FullMethodName  = "/MapReduceExercise.WorkerService/Mapping"
+	WorkerService_Reducing_FullMethodName = "/MapReduceExercise.WorkerService/Reducing"
 )
 
-// MapReduceServiceClient is the client API for MapReduceService service.
+// WorkerServiceClient is the client API for WorkerService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type MapReduceServiceClient interface {
+type WorkerServiceClient interface {
 	Mapping(ctx context.Context, in *Chunk, opts ...grpc.CallOption) (*Response, error)
 	Reducing(ctx context.Context, in *Chunk, opts ...grpc.CallOption) (*Response, error)
 }
 
-type mapReduceServiceClient struct {
+type workerServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewMapReduceServiceClient(cc grpc.ClientConnInterface) MapReduceServiceClient {
-	return &mapReduceServiceClient{cc}
+func NewWorkerServiceClient(cc grpc.ClientConnInterface) WorkerServiceClient {
+	return &workerServiceClient{cc}
 }
 
-func (c *mapReduceServiceClient) Mapping(ctx context.Context, in *Chunk, opts ...grpc.CallOption) (*Response, error) {
+func (c *workerServiceClient) Mapping(ctx context.Context, in *Chunk, opts ...grpc.CallOption) (*Response, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Response)
-	err := c.cc.Invoke(ctx, MapReduceService_Mapping_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, WorkerService_Mapping_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *mapReduceServiceClient) Reducing(ctx context.Context, in *Chunk, opts ...grpc.CallOption) (*Response, error) {
+func (c *workerServiceClient) Reducing(ctx context.Context, in *Chunk, opts ...grpc.CallOption) (*Response, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Response)
-	err := c.cc.Invoke(ctx, MapReduceService_Reducing_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, WorkerService_Reducing_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// MapReduceServiceServer is the server API for MapReduceService service.
-// All implementations must embed UnimplementedMapReduceServiceServer
+// WorkerServiceServer is the server API for WorkerService service.
+// All implementations must embed UnimplementedWorkerServiceServer
 // for forward compatibility.
-type MapReduceServiceServer interface {
+type WorkerServiceServer interface {
 	Mapping(context.Context, *Chunk) (*Response, error)
 	Reducing(context.Context, *Chunk) (*Response, error)
-	mustEmbedUnimplementedMapReduceServiceServer()
+	mustEmbedUnimplementedWorkerServiceServer()
 }
 
-// UnimplementedMapReduceServiceServer must be embedded to have
+// UnimplementedWorkerServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedMapReduceServiceServer struct{}
+type UnimplementedWorkerServiceServer struct{}
 
-func (UnimplementedMapReduceServiceServer) Mapping(context.Context, *Chunk) (*Response, error) {
+func (UnimplementedWorkerServiceServer) Mapping(context.Context, *Chunk) (*Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Mapping not implemented")
 }
-func (UnimplementedMapReduceServiceServer) Reducing(context.Context, *Chunk) (*Response, error) {
+func (UnimplementedWorkerServiceServer) Reducing(context.Context, *Chunk) (*Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Reducing not implemented")
 }
-func (UnimplementedMapReduceServiceServer) mustEmbedUnimplementedMapReduceServiceServer() {}
-func (UnimplementedMapReduceServiceServer) testEmbeddedByValue()                          {}
+func (UnimplementedWorkerServiceServer) mustEmbedUnimplementedWorkerServiceServer() {}
+func (UnimplementedWorkerServiceServer) testEmbeddedByValue()                       {}
 
-// UnsafeMapReduceServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to MapReduceServiceServer will
+// UnsafeWorkerServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to WorkerServiceServer will
 // result in compilation errors.
-type UnsafeMapReduceServiceServer interface {
-	mustEmbedUnimplementedMapReduceServiceServer()
+type UnsafeWorkerServiceServer interface {
+	mustEmbedUnimplementedWorkerServiceServer()
 }
 
-func RegisterMapReduceServiceServer(s grpc.ServiceRegistrar, srv MapReduceServiceServer) {
-	// If the following call pancis, it indicates UnimplementedMapReduceServiceServer was
+func RegisterWorkerServiceServer(s grpc.ServiceRegistrar, srv WorkerServiceServer) {
+	// If the following call pancis, it indicates UnimplementedWorkerServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&MapReduceService_ServiceDesc, srv)
+	s.RegisterService(&WorkerService_ServiceDesc, srv)
 }
 
-func _MapReduceService_Mapping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _WorkerService_Mapping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Chunk)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MapReduceServiceServer).Mapping(ctx, in)
+		return srv.(WorkerServiceServer).Mapping(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MapReduceService_Mapping_FullMethodName,
+		FullMethod: WorkerService_Mapping_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MapReduceServiceServer).Mapping(ctx, req.(*Chunk))
+		return srv.(WorkerServiceServer).Mapping(ctx, req.(*Chunk))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MapReduceService_Reducing_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _WorkerService_Reducing_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Chunk)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MapReduceServiceServer).Reducing(ctx, in)
+		return srv.(WorkerServiceServer).Reducing(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MapReduceService_Reducing_FullMethodName,
+		FullMethod: WorkerService_Reducing_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MapReduceServiceServer).Reducing(ctx, req.(*Chunk))
+		return srv.(WorkerServiceServer).Reducing(ctx, req.(*Chunk))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// MapReduceService_ServiceDesc is the grpc.ServiceDesc for MapReduceService service.
+// WorkerService_ServiceDesc is the grpc.ServiceDesc for WorkerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var MapReduceService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "MapReduceExercise.MapReduceService",
-	HandlerType: (*MapReduceServiceServer)(nil),
+var WorkerService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "MapReduceExercise.WorkerService",
+	HandlerType: (*WorkerServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "Mapping",
-			Handler:    _MapReduceService_Mapping_Handler,
+			Handler:    _WorkerService_Mapping_Handler,
 		},
 		{
 			MethodName: "Reducing",
-			Handler:    _MapReduceService_Reducing_Handler,
+			Handler:    _WorkerService_Reducing_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "proto/mapreduce.proto",
+}
+
+const (
+	MasterService_NewRequest_FullMethodName = "/MapReduceExercise.MasterService/NewRequest"
+)
+
+// MasterServiceClient is the client API for MasterService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type MasterServiceClient interface {
+	NewRequest(ctx context.Context, in *Chunk, opts ...grpc.CallOption) (*Response, error)
+}
+
+type masterServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewMasterServiceClient(cc grpc.ClientConnInterface) MasterServiceClient {
+	return &masterServiceClient{cc}
+}
+
+func (c *masterServiceClient) NewRequest(ctx context.Context, in *Chunk, opts ...grpc.CallOption) (*Response, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Response)
+	err := c.cc.Invoke(ctx, MasterService_NewRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// MasterServiceServer is the server API for MasterService service.
+// All implementations must embed UnimplementedMasterServiceServer
+// for forward compatibility.
+type MasterServiceServer interface {
+	NewRequest(context.Context, *Chunk) (*Response, error)
+	mustEmbedUnimplementedMasterServiceServer()
+}
+
+// UnimplementedMasterServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedMasterServiceServer struct{}
+
+func (UnimplementedMasterServiceServer) NewRequest(context.Context, *Chunk) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method NewRequest not implemented")
+}
+func (UnimplementedMasterServiceServer) mustEmbedUnimplementedMasterServiceServer() {}
+func (UnimplementedMasterServiceServer) testEmbeddedByValue()                       {}
+
+// UnsafeMasterServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to MasterServiceServer will
+// result in compilation errors.
+type UnsafeMasterServiceServer interface {
+	mustEmbedUnimplementedMasterServiceServer()
+}
+
+func RegisterMasterServiceServer(s grpc.ServiceRegistrar, srv MasterServiceServer) {
+	// If the following call pancis, it indicates UnimplementedMasterServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&MasterService_ServiceDesc, srv)
+}
+
+func _MasterService_NewRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Chunk)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MasterServiceServer).NewRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MasterService_NewRequest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MasterServiceServer).NewRequest(ctx, req.(*Chunk))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// MasterService_ServiceDesc is the grpc.ServiceDesc for MasterService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var MasterService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "MapReduceExercise.MasterService",
+	HandlerType: (*MasterServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "NewRequest",
+			Handler:    _MasterService_NewRequest_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

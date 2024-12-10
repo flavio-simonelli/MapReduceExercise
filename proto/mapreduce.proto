@@ -6,13 +6,19 @@ option go_package = "./proto/gen";
 
 message Chunk {
   repeated int32 numbers = 1; // Campo che rappresenta uno slice di numeri interi
+  string idRichiesta = 2;
 }
 
 message response {
   bool ack = 1; // booleano che mi dice se si è verificato qualche errore
+  string idRichiesta = 2;
 }
 
-service MapReduceService {
+service WorkerService {
   rpc Mapping (Chunk) returns (response);
   rpc Reducing (Chunk) returns (response);
+}
+
+service MasterService {
+  rpc NewRequest (Chunk) returns (response);
 }

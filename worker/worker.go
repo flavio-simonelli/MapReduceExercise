@@ -12,6 +12,7 @@ import (
 	"net"
 	"sort"
 	"sync"
+	"time"
 )
 
 var (
@@ -22,7 +23,14 @@ var (
 
 // Struct Worker che implementa i servizi gRPC
 type Worker struct {
-	pb.UnimplementedMapReduceServiceServer
+	pb.UnimplementedWorkerServiceServer
+	ReduceQueue map[ReduceQueueKey][][]int
+	Mutex       sync.Mutex
+}
+
+type ReduceQueueKey struct {
+	Client    string
+	Timestamp time.Time
 }
 
 // Funzione di hashing per partizionare i numeri nella fase di mapping in base al numero di reducers
@@ -62,7 +70,7 @@ func (w *Worker) Mapping(ctx context.Context, chunk *pb.Chunk) (*pb.Response, er
 				log.Fatalf("Errore nella connessione al worker %d: %v\n", i, err)
 			}
 			defer conn.Close()                                                            // chiusura della connessione alla fine della goroutine
-			client := pb.NewMapReduceServiceClient(conn)                                  // creazione del client grpc
+			client := pb.NewWorkerServiceClient(conn)                                     // creazione del client grpc
 			_, err = client.Reducing(context.Background(), &pb.Chunk{Numbers: partition}) // effettua la chiamata gRPC di Mapping
 			if err != nil {
 				log.Fatalf("Errore nella chiamata Reducing al worker %d: %v\n", i, err)
@@ -103,13 +111,13 @@ func portsetting() (int, error) {
 func main() {
 
 	// Leggo la porta da riga di comando
-	port, error := portsetting()
-	if error != nil {
-		log.Fatalf("Errore nella lettura della porta selezionata: %v", error)
+	port, err := portsetting()
+	if err != nil {
+		log.Fatalf("Errore nella lettura della porta selezionata: %v", err)
 	}
 
 	// COnfigurazione delle variabili globali per la configurazione dei worker
-	configFile, err := config.ReadConfig()
+	configFile, err := config.ReadConfigWorker()
 	if err != nil {
 		log.Fatalf("Errore nella lettura della configurazione: %v", err)
 	}
@@ -126,7 +134,7 @@ func main() {
 	grpcServer := grpc.NewServer()
 
 	// Registra il servizio MapReduceService
-	pb.RegisterMapReduceServiceServer(grpcServer, &Worker{})
+	pb.RegisterWorkerServiceServer(grpcServer, &Worker{})
 
 	// Avvia il server gRPC
 	if err := grpcServer.Serve(lis); err != nil {
