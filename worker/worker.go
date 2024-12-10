@@ -2,7 +2,7 @@ package main
 
 import (
 	"MapReduceExercise/config"
-	pb "MapReduceExercise/proto"
+	pb "MapReduceExercise/proto/gen"
 	"context"
 	"flag"
 	"fmt"
@@ -10,12 +10,14 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"net"
-	"os"
 	"sort"
+	"sync"
 )
 
 var (
-	port = flag.Int("port", 0, "Porta su cui il worker offre il servizio (obbligatorio: numero da 1 a 65535)")
+	port        = flag.Int("port", 0, "Porta su cui il worker offre il servizio (obbligatorio: numero da 1 a 65535)")
+	workersList []config.Worker
+	nWorkers    int
 )
 
 // Struct Worker che implementa i servizi gRPC
@@ -30,7 +32,6 @@ func hashPartition(key int32, numReducers int32) int32 {
 
 // Mapping: implementazione della funzione Mapping
 func (w *Worker) Mapping(ctx context.Context, chunk *pb.Chunk) (*pb.Response, error) {
-	log.Printf("Mapping called with numbers: %v", chunk.Numbers)
 
 	// Ordinamento dei numeri ricevuti (ordina in modo crescente)
 	sort.Slice(chunk.Numbers, func(i, j int) bool {
@@ -38,56 +39,38 @@ func (w *Worker) Mapping(ctx context.Context, chunk *pb.Chunk) (*pb.Response, er
 	})
 	log.Printf("Sorted numbers: %v", chunk.Numbers)
 
-	//legge la configurazione dei worker dal file di configurazione per sapere ip, porta per ciascun worker e sapere quanti sono
-	readConfig, err := config.ReadConfig()
-	if err != nil {
-		log.Fatalf("Errore nella lettura della configurazione: %v", err)
-		return nil, err
-	}
-	// calcolo il numero di reducer
-	numReducers := int32(len(readConfig.Workers))
-
-	// Utilizziamo la funzione di hash per dividere il chunk e distribuirlo ai vari reducer
-	// Creiamo una slice di slice per contenere i chunk partizionati per ogni reducer
-	partitionedChunks := make([][]int32, numReducers)
-	// Iteriamo sui numeri nel chunk e li assegnamo al reducer corretto
+	// Partizionamento in modo efficiente, idea del Terasort, per suddividere il chunk e distribuirlo ai vari reducer
+	partitionedChunks := make([][]int32, nWorkers)
+	// Assegniamo ciascun numero del chunk al reducer corrispondente tramite la funzione di hash definita
 	for _, number := range chunk.Numbers {
-		// Determiniamo l'indice del reducer tramite la funzione di hash
-		reducerIndex := hashPartition(number, numReducers)
-		// Aggiungiamo il numero al "bucket" del reducer corrispondente
-		partitionedChunks[reducerIndex] = append(partitionedChunks[reducerIndex], number)
+		reducerIndex := hashPartition(number, int32(nWorkers))                            // Determiniamo l'indice del reducer tramite la funzione di hash
+		partitionedChunks[reducerIndex] = append(partitionedChunks[reducerIndex], number) // Aggiungiamo il numero al "bucket" del reducer corrispondente
 	}
 
-	// Invio dei dati partizionati ai vari reducers
-	for i, chunk := range partitionedChunks {
-		// Recuperiamo l'indirizzo del reducer
-		address := fmt.Sprintf("%s:%d", readConfig.Workers[i].IP, readConfig.Workers[i].Port)
-		log.Printf("Connettendosi al Reducer %d all'indirizzo %s...\n", i+1, address)
+	// effettuiamo la richiesta di reducing per ogni reducer
+	var wg sync.WaitGroup
+	for i, worker := range workersList {
+		wg.Add(1) // incrementiamo contatore wg
 
-		// Creiamo la connessione gRPC al reducer
-		conn, err := grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
-			log.Printf("Errore nella connessione al Reducer %d: %v\n", i+1, err)
-			continue
-		}
-		defer conn.Close()
+		go func(i int, worker config.Worker) {
+			defer wg.Done()                                         // decrementiamo il contatore wg quando la goroutine è completata
+			address := fmt.Sprintf("%s:%d", worker.IP, worker.Port) // creiamo l'indirizzo del worker da contattare
+			partition := partitionedChunks[i]                       // partizione da inviare all'i-esimo reducer
 
-		// Creiamo il client gRPC per il reducer
-		client := pb.NewMapReduceServiceClient(conn)
-
-		// Inviamo il chunk al reducer tramite gRPC
-		response, err := client.Reducing(context.Background(), &pb.Chunk{Numbers: chunk})
-		if err != nil {
-			log.Printf("Errore nella chiamata Reducing al Reducer %d: %v\n", i+1, err)
-			continue
-		}
-
-		// Stampa la risposta del reducer
-		log.Printf("Risposta del Reducer %d: Ack=%v\n", i+1, response.Ack)
+			conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials())) // dial
+			if err != nil {
+				log.Fatalf("Errore nella connessione al worker %d: %v\n", i, err)
+			}
+			defer conn.Close()                                                            // chiusura della connessione alla fine della goroutine
+			client := pb.NewMapReduceServiceClient(conn)                                  // creazione del client grpc
+			_, err = client.Reducing(context.Background(), &pb.Chunk{Numbers: partition}) // effettua la chiamata gRPC di Mapping
+			if err != nil {
+				log.Fatalf("Errore nella chiamata Reducing al worker %d: %v\n", i, err)
+			}
+		}(i, worker)
 	}
-
-	// Ritorna un ACK positivo
-	return &pb.Response{Ack: true}, nil
+	wg.Wait()                           // aspettiamo che tutte le goroutine abbiano completato
+	return &pb.Response{Ack: true}, nil // Ritorna un ACK positivo
 }
 
 // Reducing: implementazione della funzione Reducing
@@ -118,30 +101,36 @@ func portsetting() (int, error) {
 }
 
 func main() {
-	// Leggi porta dalla riga di comando
+
+	// Leggo la porta da riga di comando
 	port, error := portsetting()
 	if error != nil {
-		fmt.Println("Errore:", error)
-		os.Exit(1)
+		log.Fatalf("Errore nella lettura della porta selezionata: %v", error)
 	}
-	log.Printf("il numero di porta scelto è: %d\n", port)
+
+	// COnfigurazione delle variabili globali per la configurazione dei worker
+	configFile, err := config.ReadConfig()
+	if err != nil {
+		log.Fatalf("Errore nella lettura della configurazione: %v", err)
+	}
+	workersList = configFile.Workers
+	nWorkers = len(workersList)
 
 	// Avvia il listener TCP
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	log.Printf("worker listening at %v", port)
 
 	//Creazione del server gRPC
 	grpcServer := grpc.NewServer()
 
 	// Registra il servizio MapReduceService
 	pb.RegisterMapReduceServiceServer(grpcServer, &Worker{})
-	log.Printf("worker registered successfully")
 
 	// Avvia il server gRPC
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("impossibile avviare il worker: %v", err)
 	}
+	log.Printf("Worker online")
 }

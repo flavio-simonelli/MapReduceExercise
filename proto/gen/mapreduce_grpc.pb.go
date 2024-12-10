@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v3.21.12
-// source: config/mapreduce.proto
+// source: proto/mapreduce.proto
 
-package proto
+package gen
 
 import (
 	context "context"
@@ -155,5 +155,5 @@ var MapReduceService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "config/mapreduce.proto",
+	Metadata: "proto/mapreduce.proto",
 }
