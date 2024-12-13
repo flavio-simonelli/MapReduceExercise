@@ -80,6 +80,7 @@ func (w *Worker) Mapping(ctx context.Context, chunk *pb.Chunk) (*pb.Response, er
 	return &pb.Response{Ack: true}, nil // Ritorna un ACK positivo
 }
 
+/*
 func Sort(matrix [][]int32) []int32 {
 	// Creiamo una lista vuota per raccogliere tutti i numeri
 	var lista []int32
@@ -94,6 +95,40 @@ func Sort(matrix [][]int32) []int32 {
 	})
 	// Restituiamo la lista ordinata
 	return lista
+}*/
+
+// Sort ordina una matrice di righe già ordinate in un unico vettore di int32.
+func Sort(matrix [][]int32) []int32 {
+	if len(matrix) == 0 {
+		return []int32{}
+	}
+
+	result := []int32{}
+	indices := make([]int, len(matrix)) // Indici per tracciare la posizione corrente in ogni riga
+
+	for {
+		minVal := int32(^uint32(0) >> 1) // Massimo valore int32
+		minRow := -1
+
+		// Trova il valore minimo tra i primi elementi disponibili di ogni riga
+		for i := 0; i < len(matrix); i++ {
+			if indices[i] < len(matrix[i]) && matrix[i][indices[i]] < minVal {
+				minVal = matrix[i][indices[i]]
+				minRow = i
+			}
+		}
+
+		// Se non c'è più nessun elemento da processare, esci dal loop
+		if minRow == -1 {
+			break
+		}
+
+		// Aggiungi il valore minimo al risultato e avanza l'indice della riga corrispondente
+		result = append(result, minVal)
+		indices[minRow]++
+	}
+
+	return result
 }
 
 // Funzione per scrivere i risultati ordinati su file
