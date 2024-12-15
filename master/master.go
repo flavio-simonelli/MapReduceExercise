@@ -21,7 +21,7 @@ type Master struct {
 	pb.UnimplementedMasterServiceServer
 }
 
-func (w *Master) NewRequest(ctx context.Context, chunk *pb.Chunk) (*pb.Response, error) {
+func (w *Master) NewRequest(_ context.Context, chunk *pb.Chunk) (*pb.Response, error) {
 	// dividiamo la slice per ciascun worker
 	baseSize := len(chunk.Numbers) / nWorkers // numeri per ogni worker (parte omogenea)
 	rest := len(chunk.Numbers) % nWorkers     // numeri in eccesso che dovranno essere spartiti in modo disomogeneo

@@ -1,30 +1,29 @@
 #!/bin/bash
 
 # la posizione del file .sh
-WORK_DIR=$(dirname "$(realpath "$0")")
+WORK_DIR=$""
 
 # Numero di worker da avviare
 NUM_WORKERS=4
 
 # Porta base per i worker
-BASE_PORT=5000
+BASE_PORT=50000
 
 # Esegui 'go mod tidy' (se necessario)
-cd "$WORK_DIR"
+cd "$WORK_DIR" || exit
 go mod tidy
 
 # Funzione per avviare un worker
 start_worker() {
     port=$((BASE_PORT + $1))
-    cd "$WORK_DIR/worker"
-    go run worker -p $port &
+    go run ./worker/worker.go -port $port &
 }
 
 # Avvia tutti i worker
-for i in $(seq 1 $NUM_WORKERS); do
-    start_worker $i
+# shellcheck disable=SC2004
+for i in $(seq 0 $(($NUM_WORKERS-1))); do
+    start_worker "$i"
 done
 
 # Avvia il master
-cd "$WORK_DIR/master"
-go run master &
+go run ./master/master.go &

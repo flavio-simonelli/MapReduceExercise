@@ -21,7 +21,7 @@ var (
 	nWorkers    int
 )
 
-// Struct Worker che implementa i servizi gRPC
+// Worker Struct Worker che implementa i servizi gRPC
 type Worker struct {
 	pb.UnimplementedWorkerServiceServer
 	ReduceRequest map[string][][]int32
@@ -35,7 +35,7 @@ func hashPartition(key int32, numReducers int32) int32 {
 }
 
 // Mapping implementazione della funzione Mapping
-func (w *Worker) Mapping(ctx context.Context, chunk *pb.Chunk) (*pb.Response, error) {
+func (w *Worker) Mapping(_ context.Context, chunk *pb.Chunk) (*pb.Response, error) {
 
 	// Ordinamento dei numeri ricevuti (ordina in modo crescente)
 	sort.Slice(chunk.Numbers, func(i, j int) bool {
@@ -43,7 +43,7 @@ func (w *Worker) Mapping(ctx context.Context, chunk *pb.Chunk) (*pb.Response, er
 	})
 	log.Printf("Sorted numbers: %v", chunk.Numbers)
 
-	// Partizionamento in modo efficiente, idea del Terasort, per suddividere il chunk e distribuirlo ai vari reducer
+	// Partizionamento in modo efficiente, idea del Tera-sort, per suddividere il chunk e distribuirlo ai vari reducer
 	partitionedChunks := make([][]int32, nWorkers)
 	// Assegniamo ciascun numero del chunk al reducer corrispondente tramite la funzione di hash definita
 	for _, number := range chunk.Numbers {
@@ -59,7 +59,7 @@ func (w *Worker) Mapping(ctx context.Context, chunk *pb.Chunk) (*pb.Response, er
 		go func(i int, worker config.Worker) error {
 			defer wg.Done()                                         // decrementiamo il contatore wg quando la goroutine è completata
 			address := fmt.Sprintf("%s:%d", worker.IP, worker.Port) // creiamo l'indirizzo del worker da contattare
-			partition := partitionedChunks[i]                       // partizione da inviare all'i-esimo reducer
+			partition := partitionedChunks[i]                       // partizione da inviare all i-esimo reducer
 
 			conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials())) // dial
 			if err != nil {
@@ -80,36 +80,16 @@ func (w *Worker) Mapping(ctx context.Context, chunk *pb.Chunk) (*pb.Response, er
 	return &pb.Response{Ack: true}, nil // Ritorna un ACK positivo
 }
 
-/*
-func Sort(matrix [][]int32) []int32 {
-	// Creiamo una lista vuota per raccogliere tutti i numeri
-	var lista []int32
-	// Iteriamo sulle righe della matrice
-	for _, riga := range matrix {
-		// Aggiungiamo ogni elemento della riga alla lista
-		lista = append(lista, riga...)
-	}
-	// Ordiniamo la lista
-	sort.Slice(lista, func(i, j int) bool {
-		return lista[i] < lista[j]
-	})
-	// Restituiamo la lista ordinata
-	return lista
-}*/
-
 // Sort ordina una matrice di righe già ordinate in un unico vettore di int32.
 func Sort(matrix [][]int32) []int32 {
 	if len(matrix) == 0 {
 		return []int32{}
 	}
-
-	result := []int32{}
+	var result []int32
 	indices := make([]int, len(matrix)) // Indici per tracciare la posizione corrente in ogni riga
-
 	for {
 		minVal := int32(^uint32(0) >> 1) // Massimo valore int32
 		minRow := -1
-
 		// Trova il valore minimo tra i primi elementi disponibili di ogni riga
 		for i := 0; i < len(matrix); i++ {
 			if indices[i] < len(matrix[i]) && matrix[i][indices[i]] < minVal {
@@ -117,21 +97,18 @@ func Sort(matrix [][]int32) []int32 {
 				minRow = i
 			}
 		}
-
 		// Se non c'è più nessun elemento da processare, esci dal loop
 		if minRow == -1 {
 			break
 		}
-
 		// Aggiungi il valore minimo al risultato e avanza l'indice della riga corrispondente
 		result = append(result, minVal)
 		indices[minRow]++
 	}
-
 	return result
 }
 
-// Funzione per scrivere i risultati ordinati su file
+// WriteResultToFile Funzione per scrivere i risultati ordinati su file
 func WriteResultToFile(numbers []int32, filename string) error {
 	nameFile := fmt.Sprintf("output/%s.txt", filename)
 	// Creiamo il file o lo apriamo in modalità scrittura (crea un nuovo file se non esiste)
@@ -139,7 +116,12 @@ func WriteResultToFile(numbers []int32, filename string) error {
 	if err != nil {
 		return fmt.Errorf("errore nella creazione del file: %v", err)
 	}
-	defer file.Close() // Assicuriamoci di chiudere il file alla fine
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			err = fmt.Errorf("errore durante la chiusura del file: %v", err)
+		}
+	}(file) // Assicuriamoci di chiudere il file alla fine
 	// Scriviamo i numeri ordinati nel file, separandoli da una nuova riga
 	for _, num := range numbers {
 		_, err := fmt.Fprintln(file, num)
@@ -151,14 +133,14 @@ func WriteResultToFile(numbers []int32, filename string) error {
 	return nil
 }
 
-// Reducing: implementazione della funzione Reducing
-func (w *Worker) Reducing(ctx context.Context, chunk *pb.Chunk) (*pb.Response, error) {
+// Reducing implementazione della funzione Reducing
+func (w *Worker) Reducing(_ context.Context, chunk *pb.Chunk) (*pb.Response, error) {
 	w.Mutex.Lock()                                                                                 // blocchiamo la scrittura sulla struttura che mantiene tutte le richieste pendenti
 	w.ReduceRequest[chunk.IdRichiesta] = append(w.ReduceRequest[chunk.IdRichiesta], chunk.Numbers) // aggiungiamo la nuova porzione
 	// controlliamo che abbiamo ricevuto tutte le porzioni da ogni mapper
 	if len(w.ReduceRequest[chunk.IdRichiesta]) == nWorkers { // se sono arrivati tutti i messaggi
 		res := Sort(w.ReduceRequest[chunk.IdRichiesta])                 // ordiniamo le porzioni che sono arrivate
-		filename := fmt.Sprintf("%s_%d", chunk.IdRichiesta, w.idWorker) // costruiamo il nome del file output
+		filename := fmt.Sprintf("%s_%d", chunk.IdRichiesta, w.idWorker) // costruiamo il nome del file di output
 		err := WriteResultToFile(res, filename)
 		if err != nil {
 			log.Printf("Errore nella save result: %v", err)
@@ -176,7 +158,7 @@ func portsetting() (int, error) {
 	// Validazione della porta
 	if *port < 1 || *port > 65535 {
 		flag.Usage()
-		return 0, fmt.Errorf("La porta deve essere un numero tra 1 e 65535")
+		return 0, fmt.Errorf("la porta deve essere un numero tra 1 e 65535")
 	}
 	// restituiamo il valore della porta inserita
 	return *port, nil
@@ -190,7 +172,7 @@ func main() {
 		log.Fatalf("Errore nella lettura della porta selezionata: %v", err)
 	}
 
-	// COnfigurazione delle variabili globali per la configurazione dei worker
+	// Configurazione delle variabili globali per la configurazione dei worker
 	configFile, err := config.ReadConfigWorker()
 	if err != nil {
 		log.Fatalf("Errore nella lettura della configurazione: %v", err)

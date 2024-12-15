@@ -29,7 +29,7 @@ type ConfigMaster struct {
 	} `json:"master"`
 }
 
-// ReadConfigWorker Funzione di utilità per leggere e parsare il file di configurazione dei worker
+// ReadConfigWorker Funzione di utilità per leggere e parse il file di configurazione dei worker
 func ReadConfigWorker() (*ConfigWorker, error) {
 	// Lettura del file JSON
 	file, err := os.ReadFile(configFileWorker)
@@ -46,7 +46,7 @@ func ReadConfigWorker() (*ConfigWorker, error) {
 	return &config, nil // Restituisce la configurazione letta
 }
 
-// ReadConfigMaster Funzione di utilità per leggere e parsare il file di configurazione master
+// ReadConfigMaster Funzione di utilità per leggere e parse il file di configurazione master
 func ReadConfigMaster() (*ConfigMaster, error) {
 	// Lettura del file JSON
 	file, err := os.ReadFile(configFileMaster)
