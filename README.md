@@ -23,25 +23,49 @@ Inoltre, nella fase di **ordinamento delle partizioni** dei reducer, è stato im
       v    v    v
   Worker Worker Worker ...
 ```
-### 2.2. Schema di funzionamento
+### 2.2. Struttura della directory
+```
+|
+|_ client
+|  |_ client.go
+|_ config
+|  |_ configMaster.json
+|  |_ configWorker.json
+|  |_ utilsJsonConfiguration.go
+|_ master
+|  |_ master.go
+|_ proto
+|  |_ gen
+|     |_ mapreduce.pb.go
+|     |_ mapreduce_grpc.pb.go
+|  |_ mapreduce.proto
+|_ worker
+|  |_ worker.go
+|_ README.md
+|_ go.mod
+|_ go.sum
+|_ start.sh
+```
+
+### 2.3. Schema di funzionamento
 
 Il sistema è composto da tre principali componenti:  
 
-### 2.2.1. Client  
+### 2.3.1. Client  
 - **Descrizione**:  
   Un client minimale (**tiny client**) progettato per generare richieste **rapide** relative al problema dell'ordinamento.  
 - **Funzionalità**:  
   - Genera un numero arbitrario (da 1 a 100 numeri) di interi casuali a runTime utilizzando come **seed** il timestamp attuale.  
   - Invia le richieste al nodo **Master**, specificando i numeri generati.  
 
-### 2.2.2. Master  
+### 2.3.2. Master  
 - **Descrizione**:  
   Il server centrale responsabile della gestione delle richieste provenienti dai client e dell'avvio dell'operazione di computazione distribuita.  
 - **Funzionalità**:  
   - Riceve le richieste dal client
   - Divide la lista di numeri in **chunk omogenei** per distribuirli ai nodi **mapper**.  
 
-### 2.2.3. Worker  
+### 2.3.3. Worker  
 - **Descrizione**:  
   Server che , come richiesto nella consegna dell'esercizio, eseguono sia la fase di **mapping** sia quella di **reducing**, rispettando il modello MapReduce. È possibile separare i due ruoli in nodi distinti con minimi interventi architetturali, aumentando ulteriormente la distribuzione del sistema.  
 - **Funzionalità**:  
