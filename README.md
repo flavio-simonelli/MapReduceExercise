@@ -27,7 +27,7 @@ Il sistema è composto da tre principali componenti:
 - **Descrizione**:  
   Un client minimale (**tiny client**) progettato per generare richieste **rapide** relative al problema dell'ordinamento.  
 - **Funzionalità**:  
-  - Genera un numero arbitrario di interi casuali a runTime utilizzando come **seed** il timestamp attuale.  
+  - Genera un numero arbitrario (da 1 a 100 numeri) di interi casuali a runTime utilizzando come **seed** il timestamp attuale.  
   - Invia le richieste al nodo **Master**, specificando i numeri generati.  
 
 ### 2.2. Master  
@@ -103,7 +103,7 @@ La comunicazione fra i componenti del sistema avviene tramite l'utilizzo del pro
                 - `ack`: Un valore booleano che indica se l'operazione di riduzione è stata completata con successo (`true` per successo, `false` per errore).
                 - `idRichiesta`: L'ID della richiesta originale, utile per tracciare la risposta nel caso di richieste parallele.
 
-### 3.2 Files di configurazione
+### 3.2. Files di configurazione
 Come richiesto dall'esercizio, la configurazione della struttura del sistema distribuito è statica e non prevede meccanismi di configurazione dinamica. In particolare, i dettagli relativi al worker e al master attivo sono definiti nei file di configurazione `configWorker.json` e `configMaster.json`. 
 Tale separazione è stata adottata in quanto si considera un ambiente distribuito in cui il client è distribuito con il proprio file di configurazione, contenente **esclusivamente** le informazioni relative al master. Il client, pertanto, non è a conoscenza della configurazione dei worker.
 
@@ -150,4 +150,34 @@ I seguenti file di configurazione vengono letti e gestiti tramite il package Go 
     2. Esegue il parsing del file JSON nella struttura `ConfigMaster`.
     3. Restituisce un oggetto `ConfigMaster` contenente la configurazione letta, o un errore nel caso in cui si verifichino problemi durante la lettura o il parsing.
 
-  
+### 3.3 Client
+Il client ha il compito di inviare una richiesta al nodo master, contenente una lista di numeri generati casualmente. Il flusso di esecuzione del client è il seguente:
+
+1. **Generazione della Sequenza di Numeri**: La funzione `generatoreNumeri()` crea una slice di interi di dimensione variabile (compresa tra 1 e 100). I numeri sono generati casualmente, utilizzando il timestamp corrente come seme per il generatore di numeri casuali, garantendo così una distribuzione non prevedibile dei valori.
+
+2. **Lettura della Configurazione del Master**: Il client legge la configurazione del master attraverso la funzione `ReadConfigMaster()`, la quale carica i parametri di configurazione (IP e porta) dal file `configMaster.json`. L'indirizzo del master viene quindi costruito dinamicamente combinando l'IP e la porta letti.
+
+3. **Stabilimento della Connessione gRPC**: Il client stabilisce una connessione al nodo master utilizzando il framework gRPC. 
+
+4. **Invio della Richiesta al Master**: Una volta stabilita la connessione, il client invia una richiesta al master mediante il metodo `NewRequest()` del servizio gRPC, passando come parametro un oggetto `Chunk` che contiene la lista di numeri generati e un identificativo univoco per la richiesta. L'identificativo è formato concatenando l'identificativo del client e un timestamp.
+
+### 3.4. Master 
+Il nodo master implementa il server gRPC per la gestione delle richieste di tipo MapReduce e per la distribuzione dei carichi di lavoro ai worker. Il flusso di esecuzione del nodo master è il seguente:
+
+1. **Inizializzazione**: 
+   - Il master mantiene una lista di worker configurati, letta dal file `configWorker.json`, e il numero totale di worker (`nWorkers`).
+   - La struttura `Master` implementa il servizio gRPC `MasterServiceServer`, che definisce le operazioni disponibili per il master, tra cui la gestione delle richieste di mappatura.
+
+2. **Gestione delle Richieste**: 
+   - La funzione `NewRequest` riceve una richiesta di tipo `Chunk`, che contiene un array di numeri e un identificativo univoco (`IdRichiesta`).
+   - La funzione divide la lista di numeri ricevuti in più chunk, uno per ciascun worker. La divisione dei numeri è bilanciata, ma eventuali numeri in eccesso vengono distribuiti tra i primi worker.
+
+3. **Distribuzione dei Carichi ai Worker**:
+   - Una volta suddivisa la lista in chunk, il master avvia una goroutine per ogni worker, utilizzando la libreria `sync` per sincronizzare l'esecuzione delle goroutine.
+   - Per ogni worker, il master crea una connessione gRPC e invia il chunk di dati corrispondente tramite il metodo `Mapping` del servizio gRPC del worker.
+
+4. **Gestione della Connessione e Sincronizzazione**:
+   - Il master gestisce la connessione a ciascun worker in modalità concorrente, utilizzando goroutine per eseguire in parallelo le richieste di mappatura.
+   - Una volta che tutte le goroutine hanno completato il loro lavoro, il master attende la loro conclusione con il metodo `wg.Wait()` della libreria `sync`, garantendo che tutte le operazioni di mappatura siano completate prima di rispondere al client.
+
+### 3.5. Worker
