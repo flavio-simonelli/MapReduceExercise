@@ -4,7 +4,7 @@
 ### 0.1. Automatica
 - `./start.sh`
 avvio del client (numero arbitrario di volte)
-- `go run /client/client`  
+- `go run ./client/client`  
 Osservare i file generati in output nella cartella `./output`
 
 Per arrestare:
@@ -15,10 +15,10 @@ Per arrestare:
 ### 0.2. Manuale
 - `go mod tidy`: Assicura che tutti i pacchetti utilizzati dal progetto siano correttamente dichiarati nel file `go.mod`.  
 Avvio dei worker definiti nel file `./config/configWorker.json`
-- `go run /worker/worker -p 5000 &`
-- `go run /worker/worker -p 5001 &`
-- `go run /worker/worker -p 5002 &`
-- `go run /worker/worker -p 5003 &`  
+- `go run /worker/worker -p 50000 &`
+- `go run /worker/worker -p 50001 &`
+- `go run /worker/worker -p 50002 &`
+- `go run /worker/worker -p 50003 &`  
 avvio del master
 - `go run /master/master &`  
 avvio del client (numero arbitrario di volte)
