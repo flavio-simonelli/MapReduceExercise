@@ -2,7 +2,7 @@
 
 ## 0. Come utilizzare il sistema
 ### 0.1. Automatica
-- `./start.sh`
+- `/bin/bash ./start.sh`
 avvio del client (numero arbitrario di volte)
 - `go run ./client/client`  
 Osservare i file generati in output nella cartella `./output`
