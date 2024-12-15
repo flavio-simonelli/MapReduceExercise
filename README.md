@@ -4,17 +4,17 @@
 ### 0.1. Automatica
     
 ### 0.2. Manuale
-    - `go mod tidy`: Assicura che tutti i pacchetti utilizzati dal progetto siano correttamente dichiarati nel file `go.mod`.  
-    Avvio dei worker definiti nel file `./config/configWorker.json`
-    - `go run /worker/worker -p 5000 &`
-    - `go run /worker/worker -p 5001 &`
-    - `go run /worker/worker -p 5002 &`
-    - `go run /worker/worker -p 5003 &`  
-    avvio del master
-    - `go run /master/master &`  
-    avvio del client (numero arbitrario di volte)
-    - `go run /client/client`  
-    Osservare i file generati in output nella cartella `./output`
+- `go mod tidy`: Assicura che tutti i pacchetti utilizzati dal progetto siano correttamente dichiarati nel file `go.mod`.  
+Avvio dei worker definiti nel file `./config/configWorker.json`
+- `go run /worker/worker -p 5000 &`
+- `go run /worker/worker -p 5001 &`
+- `go run /worker/worker -p 5002 &`
+- `go run /worker/worker -p 5003 &`  
+avvio del master
+- `go run /master/master &`  
+avvio del client (numero arbitrario di volte)
+- `go run /client/client`  
+Osservare i file generati in output nella cartella `./output`
 
 ## 1. Introduzione
 
