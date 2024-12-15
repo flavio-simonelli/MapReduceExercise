@@ -104,4 +104,50 @@ La comunicazione fra i componenti del sistema avviene tramite l'utilizzo del pro
                 - `idRichiesta`: L'ID della richiesta originale, utile per tracciare la risposta nel caso di richieste parallele.
 
 ### 3.2 Files di configurazione
-Come richiesto dall'esercizio la configurazione della struttura del sistema distribuito è statica e non è previsto alcun meccanismo di configurazione dinamica, infatti i worker e il master attivo sono descritti nei seguenti file i configurazione. 
+Come richiesto dall'esercizio, la configurazione della struttura del sistema distribuito è statica e non prevede meccanismi di configurazione dinamica. In particolare, i dettagli relativi al worker e al master attivo sono definiti nei file di configurazione `configWorker.json` e `configMaster.json`. 
+Tale separazione è stata adottata in quanto si considera un ambiente distribuito in cui il client è distribuito con il proprio file di configurazione, contenente **esclusivamente** le informazioni relative al master. Il client, pertanto, non è a conoscenza della configurazione dei worker.
+
+- **File `configMaster.json`**:
+    - **`master`**: Un oggetto che rappresenta il nodo master nel sistema distribuito. Contiene i seguenti campi:
+        - **`ip`**: Indirizzo IP del master. In questo caso, è impostato su `"localhost"`, che indica che il master è in esecuzione sulla stessa macchina del client.
+        - **`port`**: Porta di connessione del master. In questo esempio, la porta è la `50004`, attraverso cui il client può comunicare con il master.
+
+
+- **File `configWorker.json`**:
+    - **`workers`**: Una lista di oggetti, ciascuno dei quali rappresenta un worker nel sistema distribuito. Ogni oggetto contiene:
+        - **`id`**: Identificativo univoco del worker (ad esempio, `1`, `2`, `3`, ecc.).
+        - **`ip`**: Indirizzo IP del worker. In questo caso, tutti i worker sono configurati con l'indirizzo `"localhost"`, indicando che si trovano sulla stessa macchina del master.
+        - **`port`**: Porta di connessione di ciascun worker. Ogni worker è associato a una porta specifica, che varia da `50000` a `50003`.
+    - **`idWorkerNotUse`**: Campo che tiene traccia dell'ID che non può essere utilizzato per la definizione di un worker, in quanto designato per operazioni di controllo. Quando un worker viene avviato, è necessario specificare la porta su cui deve operare. Se la porta fornita non corrisponde a una delle porte dei worker definiti nel file di configurazione, il valore della variabile `ID` viene impostato su `-1`, indicando che la configurazione non è valida, poiché il worker non sarebbe identificato correttamente all'interno del file di configurazione.
+
+I seguenti file di configurazione vengono letti e gestiti tramite il package Go `config/utilsConfiguration.go`:
+**Costanti**:
+- **`configFileWorker`**: Definisce il percorso del file di configurazione per i worker, situato in `config/configWorker.json`.
+- **`configFileMaster`**: Definisce il percorso del file di configurazione per il master, situato in `config/configMaster.json`.
+
+**Strutture**:
+- **`Worker`**: Rappresenta un singolo worker nel sistema. La struttura contiene i seguenti campi:
+    - **`IP`**: L'indirizzo IP del worker, rappresentato come stringa.
+    - **`Port`**: La porta associata al worker, di tipo `int32`.
+    - **`ID`**: Identificativo univoco del worker, di tipo `int32`.
+
+- **`ConfigWorker`**: Rappresenta la configurazione dei worker nel sistema. Contiene un campo:
+    - **`Workers`**: Una slice di oggetti `Worker`, ognuno dei quali rappresenta un worker configurato nel sistema.
+
+- **`ConfigMaster`**: Rappresenta la configurazione del master. Contiene un oggetto:
+    - **`Master`**: Un oggetto che include i seguenti campi:
+        - **`IP`**: L'indirizzo IP del master, rappresentato come stringa.
+        - **`Port`**: La porta associata al master, di tipo `int`.
+
+**Funzioni**:
+- **`ReadConfigWorker`**: Funzione di utilità che legge e esegue il parsing del file di configurazione dei worker. La funzione segue i seguenti passaggi:
+    1. Legge il contenuto del file JSON `config/configWorker.json`.
+    2. Esegue il parsing del file JSON nella struttura `ConfigWorker`.
+    3. Restituisce un oggetto `ConfigWorker` contenente la configurazione letta, o un errore nel caso in cui si verifichino problemi durante la lettura o il parsing.
+
+- **`ReadConfigMaster`**: Funzione di utilità che legge e esegue il parsing del file di configurazione del master. La funzione segue i seguenti passaggi:
+    1. Legge il contenuto del file JSON `config/configMaster.json`.
+    2. Esegue il parsing del file JSON nella struttura `ConfigMaster`.
+    3. Restituisce un oggetto `ConfigMaster` contenente la configurazione letta, o un errore nel caso in cui si verifichino problemi durante la lettura o il parsing.
+
+  
