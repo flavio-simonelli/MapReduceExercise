@@ -4,7 +4,7 @@
 ### 0.1. Automatica
 - `/bin/bash ./start.sh`
 
-- `go run ./client/client`  avvio del client (numero arbitrario di volte)
+- `go run ./client/client`  avvio del client (numero arbitrario di volte)  
 Osservare i file generati in output nella cartella `./output`
 
 Per arrestare:
