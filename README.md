@@ -181,3 +181,28 @@ Il nodo master implementa il server gRPC per la gestione delle richieste di tipo
    - Una volta che tutte le goroutine hanno completato il loro lavoro, il master attende la loro conclusione con il metodo `wg.Wait()` della libreria `sync`, garantendo che tutte le operazioni di mappatura siano completate prima di rispondere al client.
 
 ### 3.5. Worker
+
+Il nodo worker implementa il server gRPC che offre servizi di mappatura e riduzione per il framework MapReduce. Ogni worker gestisce una parte del processo di elaborazione distribuita, suddividendo il lavoro tra più processi in parallelo. Il flusso di esecuzione del worker è il seguente:
+
+1. **Configurazione e Inizializzazione**:
+   - Il worker legge la configurazione da un file JSON (`configWorker.json`), che include informazioni sui worker e il loro numero.
+   - La porta su cui il worker offre il servizio gRPC viene specificata tramite una flag della riga di comando. La porta deve essere valida (compresa tra 1 e 65535).
+
+2. **Gestione delle Richieste di Mappatura**:
+   - Il worker implementa il metodo `Mapping`, che riceve un `Chunk` contenente un array di numeri. Questi numeri vengono ordinati in modo crescente e successivamente partizionati utilizzando una funzione di hashing tipica del **Terasort**. L'hashing distribuisce i numeri tra i vari reducers in base al numero totale di workers.
+   - I numeri vengono partizionati in `nWorkers` bucket, dove ogni bucket è destinato a un reducer. La funzione di hash (`hashPartition`) determina il "bucket" per ciascun numero.
+
+3. **Chiamate ai Reducer**:
+   - Una volta partizionati i numeri, il worker invia ciascuna partizione a un altro worker (un reducer) utilizzando il servizio gRPC. La comunicazione avviene tramite goroutine per garantire l'elaborazione parallela.
+   - La funzione `Mapping` termina con il completamento di tutte le chiamate ai reducer.
+
+4. **Gestione delle Richieste di Riduzione**:
+   - Il worker implementa il metodo `Reducing`, che riceve i dati da un mapper. I dati vengono memorizzati in una mappa (`ReduceRequest`), dove ogni richiesta è identificata tramite un ID unico.
+   - Quando il worker riceve tutti i chunk di dati per una specifica richiesta, esegue l'ordinamento dei numeri ricevuti tramite la funzione `Sort`, che unisce tutte le porzioni di dati in un unico array ordinato utilizzando un merge sort ottimizzato con il fatto che le singole righe della matrice sono già ordinate.
+   - Una volta ordinati i dati, il worker scrive i risultati su file (in formato `.txt`) utilizzando la funzione `WriteResultToFile`.
+
+5. **Sincronizzazione e Gestione della Concorrenza**:
+   - Il worker utilizza la libreria `sync` per sincronizzare le operazioni concorrenti. In particolare, un **mutex** viene utilizzato per proteggere l'accesso alla struttura dati che memorizza le richieste di riduzione in corso, evitando conflitti tra più goroutine.
+
+7. **Scrittura dei Risultati**:
+   - Una volta completato l'ordinamento dei dati, i risultati vengono scritti in un file di output, organizzato per ID di richiesta, e salvato nella directory `output/`. Ogni file contiene una lista di numeri ordinati, separati da una nuova riga.
