@@ -6,11 +6,13 @@ Il presente repository implementa un sistema distribuito basato sul paradigma **
 Il problema trattato consiste nell’**ordinamento crescente** di un insieme di numeri casuali, sfruttando l’architettura distribuita per ottimizzare le performance in scenari di elaborazione su larga scala.  
 Questo sistema è stato realizzato nell’ambito di un esercizio del corso di Sistemi Distribuiti e Cloud Computing.  
 La scelta del linguaggio di programmazione per la sua implementazione è **Go**.  
-Per la comunicazione tra i vari componenti del sistema è stato adottato il protocollo **gRPC**.  
+Per la comunicazione tra i vari componenti del sistema è stato adottato il protocollo **gRPC**.
 L'implementazione del sistema è **focalizzata sull'ottimizzazione del costo computazionale**, con particolare attenzione alla gestione efficiente dei dati durante le fasi di mappatura e riduzione. In particolare, nella fase di **partizionamento dei dati** (Chunk → Partizioni), il sistema utilizza una **funzione di partizionamento ispirata al Terasort di Google**, che applica un **algoritmo di hashing** per suddividere il chunk di dati in diverse partizioni da distribuire ai vari reducer. Il processo di partizionamento è basato su una funzione di **hashing** che mappa i numeri del chunk rispetto al numero di **reducer attivi**, garantendo una **distribuzione omogenea** dei dati anche in presenza di **variazioni dinamiche del numero di reducer a runtime**. Questa tecnica consente di ottenere una **partizione bilanciata ed efficiente**, migliorando il carico di lavoro sui reducer.
 Inoltre, nella fase di **ordinamento delle partizioni** dei reducer, è stato implementato un **algoritmo di ordinamento delle partizioni ottimizzato**. Questo algoritmo sfrutta il fatto che le partizioni sono già **ordinate localmente**, permettendo di **combinare i dati provenienti dai vari reducer in un singolo array ordinato** in modo particolarmente efficiente. Questo approccio riduce il **costo computazionale** al minimo possibile, con una **complessità temporale di O(N)**. In questo modo, l'elaborazione dei dati risulta particolarmente **scalabile e veloce**, garantendo alte prestazioni anche con un aumento del volume dei dati o del numero di reducer coinvolti nel processo.
 
-## 2. Panoramica del sistema <br><small>schema di funzionamento</small>
+
+## 2. Panoramica del sistema
+### 2.1. Rappresentazione grafica
 
 ```
         Client
@@ -21,24 +23,25 @@ Inoltre, nella fase di **ordinamento delle partizioni** dei reducer, è stato im
       v    v    v
   Worker Worker Worker ...
 ```
+### 2.2. Schema di funzionamento
 
 Il sistema è composto da tre principali componenti:  
 
-### 2.1. Client  
+### 2.2.1. Client  
 - **Descrizione**:  
   Un client minimale (**tiny client**) progettato per generare richieste **rapide** relative al problema dell'ordinamento.  
 - **Funzionalità**:  
   - Genera un numero arbitrario (da 1 a 100 numeri) di interi casuali a runTime utilizzando come **seed** il timestamp attuale.  
   - Invia le richieste al nodo **Master**, specificando i numeri generati.  
 
-### 2.2. Master  
+### 2.2.2. Master  
 - **Descrizione**:  
   Il server centrale responsabile della gestione delle richieste provenienti dai client e dell'avvio dell'operazione di computazione distribuita.  
 - **Funzionalità**:  
   - Riceve le richieste dal client
   - Divide la lista di numeri in **chunk omogenei** per distribuirli ai nodi **mapper**.  
 
-### 2.3. Worker  
+### 2.2.3. Worker  
 - **Descrizione**:  
   Server che , come richiesto nella consegna dell'esercizio, eseguono sia la fase di **mapping** sia quella di **reducing**, rispettando il modello MapReduce. È possibile separare i due ruoli in nodi distinti con minimi interventi architetturali, aumentando ulteriormente la distribuzione del sistema.  
 - **Funzionalità**:  
@@ -204,6 +207,7 @@ Il nodo worker implementa il server gRPC che offre servizi di mappatura e riduzi
 
 5. **Sincronizzazione e Gestione della Concorrenza**:
    - Il worker utilizza la libreria `sync` per sincronizzare le operazioni concorrenti. In particolare, un **mutex** viene utilizzato per proteggere l'accesso alla struttura dati che memorizza le richieste di riduzione in corso, evitando conflitti tra più goroutine.
+
 
 7. **Scrittura dei Risultati**:
    - Una volta completato l'ordinamento dei dati, i risultati vengono scritti in un file di output, organizzato per ID di richiesta, e salvato nella directory `output/`. Ogni file contiene una lista di numeri ordinati, separati da una nuova riga.
