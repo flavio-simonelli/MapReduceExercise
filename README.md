@@ -2,7 +2,16 @@
 
 ## 0. Come utilizzare il sistema
 ### 0.1. Automatica
-    
+- `./start.sh`
+avvio del client (numero arbitrario di volte)
+- `go run /client/client`  
+Osservare i file generati in output nella cartella `./output`
+
+Per arrestare:
+- `killall worker`
+- `killall master`  
+**Attenzione**: Questo comando termina tutti i processi con nome "worker" o "master".
+
 ### 0.2. Manuale
 - `go mod tidy`: Assicura che tutti i pacchetti utilizzati dal progetto siano correttamente dichiarati nel file `go.mod`.  
 Avvio dei worker definiti nel file `./config/configWorker.json`
