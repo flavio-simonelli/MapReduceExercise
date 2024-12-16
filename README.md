@@ -24,6 +24,12 @@ avvio del master
 avvio del client (numero arbitrario di volte)
 - `go run ./client/client.go`  
 Osservare i file generati in output nella cartella `./output`
+### 0.3. Come scalare il sistema
+La scalabilità, come richiesto dall'esercizio è solamente a sistema offline.
+Grazie al file di configurazione è molto semplice.
+I passi da seguire sono i seguenti:
+- modificare il file `./config/configWorker.json` aggiungendo o rimuovendo nodi worker (si consiglia di mantenere il numero di porte utilizzate contiguo così da poter utilizzare lo script di bash `start.h` automatizzando il processo di inizializzazione del sistema, naturalmente usare porte non contigue non influenza il sistema).
+- **Opzionale**: se si è mantenuto uno spazio delle porte contigue al passo precedente è possibile modificare il file `start.h` semplicemente cambiando la variabile NUM_WORKER nel numero di worker inseriti al passo precedente (altrimenti bisogna far partire tramite procedura manuale tutti i worker stando attenti a utilizzare le stesse porte definite nel file di configurazione)
 
 ## 1. Introduzione
 
