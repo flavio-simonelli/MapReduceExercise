@@ -69,7 +69,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Errore nella lettura della configurazione del master: %v", err)
 	}
-	log.Println("lettura file configurazione del master completata")
 
 	// lettura della configurazione dei worker dal file configWorker.json
 	readConfigWorker, err := config.ReadConfigWorker()
@@ -78,14 +77,12 @@ func main() {
 	}
 	workersList = readConfigWorker.Workers
 	nWorkers = len(workersList)
-	log.Println("lettura file configurazione worker completata")
 
 	// Avvia il listener TCP
 	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", readConfigMaster.Master.IP, readConfigMaster.Master.Port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	log.Println("listen completata")
 
 	//Creazione del server gRPC
 	grpcServer := grpc.NewServer()
@@ -94,9 +91,9 @@ func main() {
 	pb.RegisterMasterServiceServer(grpcServer, &Master{})
 
 	// Avvia il server gRPC
+	log.Printf("Master online")
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("impossibile avviare il master: %v", err)
 	}
-	log.Printf("Master online")
 
 }

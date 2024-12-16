@@ -41,7 +41,6 @@ func (w *Worker) Mapping(_ context.Context, chunk *pb.Chunk) (*pb.Response, erro
 	sort.Slice(chunk.Numbers, func(i, j int) bool {
 		return chunk.Numbers[i] < chunk.Numbers[j]
 	})
-	log.Printf("Sorted numbers: %v", chunk.Numbers)
 
 	// Partizionamento in modo efficiente, idea del Tera-sort, per suddividere il chunk e distribuirlo ai vari reducer
 	partitionedChunks := make([][]int32, nWorkers)
@@ -76,7 +75,8 @@ func (w *Worker) Mapping(_ context.Context, chunk *pb.Chunk) (*pb.Response, erro
 			return nil
 		}(i, worker)
 	}
-	wg.Wait()                           // aspettiamo che tutte le goroutine abbiano completato
+	wg.Wait() // aspettiamo che tutte le goroutine abbiano completato
+	log.Printf("Il mapper %d ha ordinato e partizionato i seguenti numeri: %v\n", w.idWorker, chunk.Numbers)
 	return &pb.Response{Ack: true}, nil // Ritorna un ACK positivo
 }
 
@@ -146,6 +146,7 @@ func (w *Worker) Reducing(_ context.Context, chunk *pb.Chunk) (*pb.Response, err
 			log.Printf("Errore nella save result: %v", err)
 			return &pb.Response{Ack: false}, err
 		}
+		log.Printf("il reducer %d ha ordinato stampato su file i seguenti numeri %v\n", w.idWorker, res)
 		delete(w.ReduceRequest, chunk.IdRichiesta)
 	}
 	w.Mutex.Unlock()
@@ -203,6 +204,7 @@ func main() {
 	pb.RegisterWorkerServiceServer(grpcServer, &Worker{ReduceRequest: make(map[string][][]int32), idWorker: id})
 
 	// Avvia il server gRPC
+	log.Printf("worker %d online", id)
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("impossibile avviare il worker: %v", err)
 	}

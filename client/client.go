@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-const client = "client1" // identificativo univoco di un client (può essere un token generato ad ogni connessione per questione di )
+const client = "client1" // Identificativo univoco di un client (può essere un token generato ad ogni connessione per questione di )
 
 // Genera una lista di numeri di dimensione arbitraria (Input della richiesta MapReduce)
 func generatoreNumeri() []int32 {
@@ -51,5 +51,7 @@ func main() {
 	_, err = client.NewRequest(context.Background(), &pb.Chunk{Numbers: numeri, IdRichiesta: id}) // effettua la chiamata gRPC di richiesta
 	if err != nil {
 		log.Fatalf("Errore nella richiesta: %v\n", err)
+	} else {
+		log.Printf("La richiesta è stata eseguita correttamente, controlla i file all'interno della cartella ./output\n")
 	}
 }
