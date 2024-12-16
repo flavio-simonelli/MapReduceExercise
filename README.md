@@ -256,7 +256,5 @@ Il nodo worker implementa il server gRPC che offre servizi di mappatura e riduzi
 
 5. **Sincronizzazione e Gestione della Concorrenza**:
    - Il worker utilizza la libreria `sync` per sincronizzare le operazioni concorrenti. In particolare, un **mutex** viene utilizzato per proteggere l'accesso alla struttura dati che memorizza le richieste di riduzione in corso, evitando conflitti tra più goroutine.
-
-
 7. **Scrittura dei Risultati**:
    - Una volta completato l'ordinamento dei dati, i risultati vengono scritti in un file di output, organizzato per ID di richiesta, e salvato nella directory `output/`. Ogni file contiene una lista di numeri ordinati, separati da una nuova riga.
